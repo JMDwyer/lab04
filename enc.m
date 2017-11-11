@@ -27,5 +27,8 @@ function x = enc(bits)
    for i = 1:numbits,
       x = [x; pulse*(2*bits(i) - 1)];
    end
-
+   
+   %We need to create a wav file from x. Spec'd by project.
+   audiowrite('tx.wav', x, 44100, 'BitsPerSample', 24);
+   
 return 

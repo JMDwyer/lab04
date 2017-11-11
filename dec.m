@@ -1,5 +1,8 @@
 function outbits = dec(y)
-
+   % Needed to decode from a wav file "rx"
+   % Spec'd by project, we can set it to a variable later
+   audioread('rx.wav', y, 44100, 'BitsPerSample', 24);
+   
    % number of bits to send; 'outbits' will be a column vector of
    % this size
    numbits = 24;
@@ -19,5 +22,6 @@ function outbits = dec(y)
    for i = 1:numbits,
       outbits = [ outbits; (h'*y((i-1)*K+1:i*K) > 0)];
    end
+   
 
 end
