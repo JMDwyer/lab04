@@ -1,0 +1,63 @@
+function x = enc(bits)
+   
+   % power constraint
+   P = 1/4;
+   numbits = length(bits);
+   %M ARY PAM
+   %DIVIDE BITS INTO SAMPLES OF 24
+   %K is the bits/sample
+   
+   K = 24;
+   x = reshape(x, numbits, K);
+
+   
+   for i = (1:length(x))
+       
+       str_x = num2str(x(i));
+       % remove the spaces in the string, so it 
+       % becomes '10000000'
+       str_x(isspace(str_x)) = '';
+       % now use BIN2DEC to convert the binary 
+       % string to a decimal number
+       int = bin2dec(str_x);
+       
+       int = int - 2^(K-1);
+       
+       
+   end
+   
+
+   %OFDM STEPS
+   %STEP 1, TAKE FFT OF BITS
+   %X_fft = fft(bits);
+   
+   %APPEND CYCLIC PREFIX
+
+   
+   % time constant of the channel: approx. number of nonzero samples
+   % in the impulse response
+%   K = 250;
+
+   % the length of our transmission. After sending one bit, we
+   % wait for the channel to settle down before sending another,
+   % so it takes numbits*K samples overall.
+%   n = numbits*K;
+
+   % Construct the generic transmission pulse consisting of
+   % an impulse whose amplitude is dictated by the power 
+   % constraint, followed by K-1 zeros.
+%   pulse = (n*P/numbits)^.5*[1; zeros(K-1,1)];
+
+   % Build the transmitted signal. We send a +/- impulse, 
+   % with amplitude dictated by the power constraint, for
+   % each bit. Between pulses, we send K-1 zeros for the
+   % channel to settle down.
+%    x = [];
+%    for i = 1:numbits,
+%        x = [x; pulse*(2*bits(i) - 1)];
+%    end
+   
+   %We need to create a wav file from x. Spec'd by project.
+   audiowrite('tx.wav', x, 44100, 'BitsPerSample', 24);
+   
+return 
