@@ -3,7 +3,7 @@ function [ output ] = chansim( input )
 %   Detailed explanation goes here
 
     % Load impulse response
-	load('IR0.mat');
+	load('IR0.mat','impulse');
     
     % Convolve input signal with impulse response
     afterfilter = conv(impulse, input);

@@ -13,7 +13,7 @@ function x = enc(bits)
    
    %APPEND CYCLIC PREFIX
 
-   
+    
    %We need to create a wav file from x. Spec'd by project.
    audiowrite('tx.wav', x, 44100, 'BitsPerSample', K);
    
