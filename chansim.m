@@ -11,5 +11,7 @@ function [ output ] = chansim( input )
     % Add white noise
     snr = 100;
     output = awgn(afterfilter, snr);
+    
+    output = output(1:length(input));
 end
 
