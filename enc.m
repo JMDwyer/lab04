@@ -5,27 +5,24 @@ function [x, randphase] = enc(bits, prepend)
    % power constraint and number of bits in total
    P = 0.00125;
    numbits = length(bits);
-   ignore = 40000;
+   ignore = 5000;
    
    % Create the training signal
    % Might not need training crap in the freq region that we don't use
    % This will lower power usage
-   randphase = rand([1, numbits + ignore]) - 0.5;
-   TR = sqrt(P)*exp(1i*randphase);
+   randphase = rand([1, numbits]) - 0.5;
+   TR = [sqrt(P)*exp(1i*randphase*2*pi) zeros(1, ignore)];
    TR_DC = [0 TR];
    TR_full = [TR_DC flip(conj(TR))];
    tr = sqrt(length(TR_full))*ifft(TR_full);
    tr_prepend = [tr(end-prepend+1:end) tr];
    
    % OOK for both real and imaginary parts
-   X1_ook = zeros(1, numbits);
-   for i = 1:(numbits)
-       X1_ook(i) = bits(i)*sqrt(2*P);
-   end
+   X1_ook = bits*sqrt(2*P);
    
-   % Append 0s in the freq domain so we don't use freq above 20khz
+   % Append 0s in the freq domain so we don't use freq above 18.375khz
    % TODO: this is hardcoded right now, need to be change to an eqn
-   X1_ook = [X1_ook zeros(1, ignore)];
+   X1_ook = [X1_ook.*exp(1i*randphase*2*pi) zeros(1, ignore)];
    
    % Pad 0 for DC and append 0 if length of X1_ook is even
    X1_ook_DC = [0 X1_ook];

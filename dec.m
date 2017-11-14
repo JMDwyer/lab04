@@ -1,9 +1,9 @@
 function outbits = dec(y, randphase, prepend)
-    numbits = 200000;
+    numbits = 20000;
 
     %Power constraint
     P=0.00125;
-    ignore = 40000;
+    ignore = 5000;
     
     %skinny version of the decoder
     
@@ -17,8 +17,8 @@ function outbits = dec(y, randphase, prepend)
     
     % Decode the training symbols
     TR = 1/sqrt(length(tr))*fft(tr);
-    TR = TR(2:ceil(end/2));
-    lambda = TR./(sqrt(P)*exp(1i*randphase));
+    TR = TR(2:ceil(end/2) - ignore);
+    lambda = TR./(sqrt(P)*exp(1i*randphase*2*pi));
 
     %take DFT of the recieved signal
     Y = 1/sqrt(length(y))*fft(y);
@@ -28,6 +28,8 @@ function outbits = dec(y, randphase, prepend)
 
     %Drop DC component
     Y = Y(2:end);
+    
+    Y = Y(1:end - ignore);
 
 %     %ADD LAMBDA HERE
 %     load('IR0.mat', 'impulse')
@@ -46,17 +48,20 @@ function outbits = dec(y, randphase, prepend)
 
     % Remove channel effects
     Y = Y./lambda;
+    
+    % Remove the random phase
+    Y = Y./exp(1i*randphase*2*pi);
 
     %DECODE REAL AND IMAG COMPONENTS
     boundary = sqrt(P/2);
     outbits = zeros(1, numbits);
     for i = (1:numbits)
-    if((real(Y(i)) >= boundary))
-        outbits(i) = 1;
-    end 
-    if((real(Y(i)) <= boundary))
-        outbits(i) = 0;
-    end 
+        if((real(Y(i)) >= boundary))
+            outbits(i) = 1;
+        end 
+        if((real(Y(i)) <= boundary))
+            outbits(i) = 0;
+        end 
     end
 
 end
