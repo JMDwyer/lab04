@@ -1,66 +1,91 @@
-function outbits = dec(y, prepend, ignore, numbits)
+function outbits = dec(y, prepend, numbits)
+    % The number of bits per symbol
+    BPS = 1000;
+    
+    % Number of data symbols per training symbol and # of training symbols
+    SPTS = 10;
+    TS = ceil(numbits/BPS/SPTS);
+    
+    % The number of zeros to append in freq domain for a cut off of 18kHz
+    ignore = ceil(BPS/18000*(22050-18000));
+    
     %Power constraint
-    P = 0.00125/((numbits+10)/(numbits+ignore));
+    P = 0.00125/((BPS + prepend/2)/(BPS+ignore + prepend/2));
     
-    %skinny version of the decoder
+    % Calculate the # of symboles, amount of padding in last symbol, and
+    % the number of samples per symbol
+    symbols = ceil(numbits/BPS);
+    lastsympad = mod(numbits, BPS);
+    SPS = (BPS+ignore)*2 + 1 + prepend;
     
-    % Split up the training and data
-    tr = y(1:(numbits + ignore)*2 + 1 + prepend);
-    y = y((numbits + ignore)*2 + 1 + prepend + 301:end);
-    
-    % Remove prepends
-    tr = tr(prepend + 1:end);
-    y = y(prepend + 1:end);
-    
-    % Decode the training symbols
+    % Generate the random phases
     rng(4670);
-    randphase = rand([1, numbits]) - 0.5;
-    TR = 1/sqrt(length(tr))*fft(tr);
-    TR = TR(2:ceil(end/2) - ignore);
-    lambda = TR./(sqrt(P)*exp(1i*randphase*2*pi));
-
-    %take DFT of the recieved signal
-    Y = 1/sqrt(length(y))*fft(y);
-
-    %remove bottom half
-    Y = Y(1:ceil(end/2));
-
-    %Drop DC component
-    Y = Y(2:end);
+    randphase = rand([1, BPS]) - 0.5;
     
-    Y = Y(1:end - ignore);
+    % Decode each symbol
+    outbits = zeros(1, numbits+lastsympad);
+    for t = 1:TS
+        if t*SPS*(SPTS + 1) > length(y)
+            symsty = y(((t-1)*SPS*(SPTS + 1)+1):end);
+            SPTS = length(symsty)/SPS;
+        else
+            symsty = y(((t-1)*SPS*(SPTS + 1)+1):t*SPS*(SPTS + 1));
+        end
+        
+        % Extract the training and data samples
+        tr = symsty(1:SPS);
+        symsy = symsty(SPS+1:end);
 
-%     %ADD LAMBDA HERE
-%     load('IR0.mat', 'impulse')
-%     impulse_padded = [impulse zeros(1, length(y) - length(impulse))];
-%     lambda = 1/sqrt(length(impulse_padded))*fft(impulse_padded);
-%     lambda = lambda(1:ceil(end/2));
-%     lambda = lambda(2:end);
-%     lambda_invang = -angle(lambda);
-%     lambda_real = real(lambda.*exp(1i*lambda_invang));
+        % Remove prepends
+        tr = tr(prepend + 1:end);
 
-%     %Remove phase shift
-%     Y = Y.*exp(1i*lambda_invang);
-% 
-%     %Remove real gains
-%     Y = Y./lambda_real;
+        % Decode the training symbols
+        TR = 1/sqrt(length(tr))*fft(tr);
+        TR = TR(2:ceil(end/2) - ignore);
+        lambda = TR./(sqrt(P)*exp(1i*randphase*2*pi));
+        
+        for i = 1:SPTS
+            % Extract one symbol
+            symy = symsy(((i-1)*SPS+1):i*SPS);
 
-    % Remove channel effects
-    Y = Y./lambda;
-    
-    % Remove the random phase
-    Y = Y./exp(1i*randphase*2*pi);
+            % Remove prepends
+            symy = symy(prepend + 1:end);
 
-    %DECODE REAL AND IMAG COMPONENTS
-    boundary = sqrt(P/2);
-    outbits = zeros(1, numbits);
-    for i = (1:numbits)
-        if((real(Y(i)) >= boundary))
-            outbits(i) = 1;
-        end 
-        if((real(Y(i)) <= boundary))
-            outbits(i) = 0;
-        end 
+            % Decode the training symbols
+            TR = 1/sqrt(length(tr))*fft(tr);
+            TR = TR(2:ceil(end/2) - ignore);
+            lambda = TR./(sqrt(P)*exp(1i*randphase*2*pi));
+
+            %take DFT of the recieved signal
+            Y = 1/sqrt(length(symy))*fft(symy);
+
+            %remove bottom half
+            Y = Y(1:ceil(end/2));
+
+            %Drop DC component
+            Y = Y(2:end);
+
+            % Drop the high freq components (above 18kHz)
+            Y = Y(1:end - ignore);
+
+            % Remove channel effects
+            Y = Y./lambda;
+
+            % Remove the random phase
+            Y = Y./exp(1i*randphase*2*pi);
+
+            % Decode OOK
+            boundary = sqrt(P/2);
+            for j = (1:BPS)
+                if((real(Y(j)) >= boundary))
+                    outbits(((t-1)*SPTS + i-1)*BPS + j) = 1;
+                end 
+                if((real(Y(j)) <= boundary))
+                    outbits(((t-1)*SPTS + i-1)*BPS + j) = 0;
+                end 
+            end
+        end
     end
+    outbits = outbits(1:numbits);
 
 end
