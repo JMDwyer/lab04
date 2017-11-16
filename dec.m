@@ -1,9 +1,6 @@
-function outbits = dec(y, randphase, prepend)
-    numbits = 20000;
-
+function outbits = dec(y, prepend, ignore, numbits)
     %Power constraint
-    P=0.00125;
-    ignore = 5000;
+    P = 0.00125/((numbits+10)/(numbits+ignore));
     
     %skinny version of the decoder
     
@@ -16,6 +13,8 @@ function outbits = dec(y, randphase, prepend)
     y = y(prepend + 1:end);
     
     % Decode the training symbols
+    rng(4670);
+    randphase = rand([1, numbits]) - 0.5;
     TR = 1/sqrt(length(tr))*fft(tr);
     TR = TR(2:ceil(end/2) - ignore);
     lambda = TR./(sqrt(P)*exp(1i*randphase*2*pi));

@@ -1,15 +1,15 @@
-function [x, randphase] = enc(bits, prepend)
+function [x] = enc(bits, prepend, ignore)
     % Don't need special sync symbols at the beginning because commcloud is
     % high SNR. Can get the start of the signal by inspecting power
    
    % power constraint and number of bits in total
-   P = 0.00125;
    numbits = length(bits);
-   ignore = 5000;
+   P = 0.00125/((numbits+10)/(numbits+ignore));
    
    % Create the training signal
    % Might not need training crap in the freq region that we don't use
    % This will lower power usage
+   rng(4670);
    randphase = rand([1, numbits]) - 0.5;
    TR = [sqrt(P)*exp(1i*randphase*2*pi) zeros(1, ignore)];
    TR_DC = [0 TR];

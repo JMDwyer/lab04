@@ -1,24 +1,24 @@
 load('bits.mat')
 
-bits = bits(1:20000);
+numbits = 16000;
+bits = bits(1:numbits);
 
 prepend = 300;
+ignore = 4000;
 
 % Encode bits
-[encoded, randphase] = enc(bits, prepend);
+encoded = enc(bits, prepend, ignore);
 plot(encoded)
 power = (1/length(encoded))*sum(encoded.^2)
-% Clip the signal
-% encoded(encoded>1) = 1;
-% encoded(encoded<-1) = -1;
+powerperc = power/0.00125
 
 % Send through channel
 %afterchan = chansim(encoded);
 
 Fs = 44100;
-audiowrite('encoded.wav', encoded, Fs, 'BitsPerSample', 24);
-!ccplay encoded.wav afterchan.wav --channel audio0 --depth 24 --rate 44100
-[afterchan, Fs0] = audioread('afterchan.wav');
+audiowrite('tx.wav', encoded, Fs, 'BitsPerSample', 24);
+system('ccplay tx.wav rx.wav --channel audio1 --depth 24 --rate 44100')
+[afterchan, Fs0] = audioread('rx.wav');
 
 % Find the starting index
 found = 0;
@@ -34,6 +34,10 @@ afterchan = afterchan(start_idx:start_idx + length(encoded));
 afterchan = afterchan';
 
 % Decode
-decoded = dec(afterchan, randphase, prepend);
+decoded = dec(afterchan, prepend, ignore, numbits);
 
 correct = sum(decoded == bits)
+R = length(bits)/(length(encoded)/Fs);
+N = length(bits) - correct;
+P = power;
+fom = (min(R, 3000000)*(1-N/100000)^10)/max(1,800*P)
