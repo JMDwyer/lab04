@@ -46,12 +46,7 @@ function [x] = enc(bits)
         X1_ook = symbits*sqrt(2*P);
 
         % Append 0s in the freq domain so we don't use freq above 18.375khz
-        % TODO: this is hardcoded right now, need to be change to an eqn
         X1_ook = [X1_ook.*exp(1i*randphase*2*pi) zeros(1, ignore)];
-        
-        if i == 29
-            X1_ook_out = X1_ook;
-        end
 
         % Pad 0 for DC and append 0 if length of X1_ook is even
         X1_ook_DC = [0 X1_ook];

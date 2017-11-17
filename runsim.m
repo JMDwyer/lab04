@@ -11,7 +11,7 @@ powerperc = power/0.00125
 %afterchan = chansim(encoded);
 
 Fs = 44100;
-system('ccplay tx.wav rx.wav --prepause 0.27 --channel audio0 --depth 24 --rate 44100')
+system('ccplay tx.wav rx.wav --prepause 0.27 --channel audio0 --depth 24 --rate 44100');
 
 % Decode
 decoded = dec();
