@@ -1,15 +1,21 @@
-function [x] = enc(bits, prepend)
+function [x] = enc(bits)
     % Don't need special sync symbols at the beginning because commcloud is
     % high SNR. Can get the start of the signal by inspecting power
+    
+    % Make into row vector
+    bits = bits';
    
     % The number of bits per symbol
-    BPS = 1000;
+    BPS = 4000;
     
     % Number of data symbols per training symbol
-    SPTS = 10;
+    SPTS = 20;
     
     % The number of zeros to append in freq domain for a cut off of 18kHz
     ignore = ceil(BPS/18000*(22050-18000));
+    
+    % Number of samples to prepend
+    prepend = 200;
     
     % power constraint and number of bits in total
     numbits = length(bits);
@@ -22,7 +28,7 @@ function [x] = enc(bits, prepend)
     
     % Generate the random phases
     rng(4670);
-    randphase = rand([1, BPS]) - 0.5;
+    randphase = rand([1, BPS]);
     
     % Create the training signal
     TR = [sqrt(P)*exp(1i*randphase*2*pi) zeros(1, ignore)];
@@ -42,6 +48,10 @@ function [x] = enc(bits, prepend)
         % Append 0s in the freq domain so we don't use freq above 18.375khz
         % TODO: this is hardcoded right now, need to be change to an eqn
         X1_ook = [X1_ook.*exp(1i*randphase*2*pi) zeros(1, ignore)];
+        
+        if i == 29
+            X1_ook_out = X1_ook;
+        end
 
         % Pad 0 for DC and append 0 if length of X1_ook is even
         X1_ook_DC = [0 X1_ook];
@@ -62,6 +72,6 @@ function [x] = enc(bits, prepend)
         end
         x = [x X1_td_full];
         %We need to create a wav file from x. Spec'd by project.
-        %audiowrite('tx.wav', x, 44100, 'BitsPerSample', K);
     end
+    audiowrite('tx.wav', x, 44100, 'BitsPerSample', 24);
 return 

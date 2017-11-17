@@ -9,7 +9,7 @@ function [ output ] = chansim( input )
     afterfilter = conv(impulse, input);
     
     % Add white noise
-    snr = 100;
+    snr = 90;
     output = awgn(afterfilter, snr);
     
     output = output(1:length(input));
